@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Todo app</title>
+    <script type='text/javascript' src='lib/jquery-2.1.1.js'></script>
+    <script type='text/javascript' src='lib/jquery-ui.js'></script>
+    <script type='text/javascript' src='lib/bootstrap.min.js'></script>
+    <script type='text/javascript' src='lib/knockout-3.1.0.js'></script>
+    <script type='text/javascript' src='lib/knockout.localStorage.js'></script>
+    <script type='text/javascript' src='lib/jquery.validate.js'></script>
+    <script type='text/javascript' src='lib/ui.datepicker-ru.js'></script>
+    <script type='text/javascript' src='lib/markdown.js'></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/jquery-ui.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="container">
+        <div class="todo-container filters">
+            <h3>Фильтры</h3>
+            <p>
+                <label for="filterByTitle">По названию</label>
+                <input data-bind="value: filterByTitle, valueUpdate: 'afterkeydown'" class="form-control" id="filterByTitle" placeholder="Введите фразу">
+            </p>
+
+            <p>
+                <label>По дате</label>
+                <p><input data-bind="value: filterByDate1, valueUpdate: 'afterkeydown'" class="form-control" id="filterByDate1" placeholder="От"></p>
+                <p><input data-bind="value: filterByDate2, valueUpdate: 'afterkeydown'" class="form-control" id="filterByDate2" placeholder="До"></p>
+            </p>
+
+            <p>
+                <label>По статусу</label>
+                <div data-bind="foreach: filters">
+                    <input type="radio" name="status" data-bind="value: key, click: $root.chooseStatus, checked: isSelected"/>&nbsp;
+                    <span data-bind="text: title"></span><br/>
+                </div>
+        </div>
+
+        <div class="todo-container todos">
+            <h3>Todo список</h3>
+            <p>Всего задач: <span data-bind='text: filteredTodos().length'>&nbsp;</span></p>
+            <table class="table" data-bind='visible: filteredTodos().length > 0'>
+                <thead>
+                    <tr data-bind="foreach: headers">
+                        <td data-bind="click: $parent.sort, text: title"></td>
+                    </tr>
+                </thead>
+                <tbody data-bind='foreach: filteredTodos()'>
+                    <tr>
+                        <td data-bind='text: title, style: {"text-decoration": completed()? "line-through" : "none"}, click: $root.openTodo'></td>
+                        <td data-bind='text: date, style: {"text-decoration": completed()? "line-through" : "none"}, click: $root.openTodo'></td>
+                        <td data-bind='text: details, style: {"text-decoration": completed()? "line-through" : "none"}, click: $root.openTodo'></td>
+                        <td><input type="checkbox" data-bind="checked: completed(), click: $root.checkTodo"></td>
+                        <td><button type="button" data-bind='click: $root.removeTodo' class="close"><span aria-hidden="true">&times;</span></button></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <button class="btn btn-primary" data-bind='click: showForm, visible: displayButton'>Создать</button>
+
+            <form class="todoForm" role="form" data-bind="visible: displayForm">
+                <div class="form-group">
+                    <label for="newTitle">Title</label>
+                    <input class="form-control required" id="newTitle" data-bind="value: newTitle">
+                </div>
+                <div class="form-group">
+                    <label for="newDate">Date</label>
+                    <input class="form-control" id="newDate" data-bind="value: newDate, valueUpdate: 'afterkeydown'">
+                </div>
+                <div class="form-group">
+                    <label for="newDetails">Details</label>
+                    <textarea class="form-control" id="newDetails" rows="3" data-bind="value: newDetails"></textarea>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox">
+                        <label>
+                            <input id="newCompleted" data-bind="checked: false, value: newCompleted" type="checkbox"> Completed
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" type="submit" data-bind="enable: newTitle().length > 0">Add</button>
+                <button class="btn btn-default" data-bind="click: hideForm">Cancel</button>
+            </form>
+        </div>
+
+        <div class="todo-container preview">
+            <h3>Просмотр</h3>
+            <div data-bind="visible: displayPreview()">
+                <div class="form-group">
+                    <label for="previewTitle">Title</label>
+                    <div id="previewTitle" data-bind="text: previewTitle()"></div>
+                </div>
+                <div class="form-group">
+                    <label for="previewDate">Date</label>
+                    <div id="previewDate" data-bind="text: previewDate()"></div>
+                </div>
+                <div class="form-group">
+                    <label for="previewDetails">Details</label>
+                    <div id="previewDetails" data-bind="html: previewDetails()"></div>
+                </div>
+                <div class="form-group">
+                    <label for="previewCompleted">Completed</label>
+                    <input type="checkbox" id="previewCompleted" data-bind="checked: previewCompleted()">
+                </div>
+            </div>
+
+            <form role="form" class="editArea">
+                <div class="form-group" data-bind="visible: displayTitle()">
+                    <label for="editTitle">Title</label>
+                    <input class="form-control" id="editTitle" data-bind="value: editTitle()">
+                </div>
+
+                <div class="form-group" data-bind="visible: displayDate()">
+                    <label for="editDate">Date</label>
+                    <input class="form-control" id="editDate" data-bind="value: editDate()">
+                </div>
+
+                <div class="form-group" data-bind="visible: displayDetails()">
+                    <label for="editDetails">Details</label>
+                    <textarea class="form-control" id="editDetails" rows="3" data-bind="value: editDetails(), valueUpdate: 'afterkeydown'"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <button class="btn btn-primary" data-bind="visible: displaySaveBtn, click: $root.saveEditForm">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script type='text/javascript' src='lib/script.js'></script>
+</body>
+</html>
